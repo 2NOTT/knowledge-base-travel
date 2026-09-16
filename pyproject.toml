@@ -1,0 +1,35 @@
+[project]
+name = "knowledge-base-travel"
+version = "0.1.0"
+description = "旅游行业特定版知识库助手，支持混合向量、HyDE、联网搜索和多轮问答"
+authors = [
+    { name = "nott", email = "lxtgzh04@163.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "openai-agents>=0.17.2",
+    "colorlog>=6.12.0",
+    "dashscope>=1.20.0",
+    "fastapi>=0.115.0",
+    "flagembedding>=1.4.2",
+    "langchain-openai>=1.6.2",
+    "langchain-text-splitters>=1.1.2",
+    "langgraph>=1.2.11",
+    "minio>=7.2.0",
+    "modelscope>=1.40.1",
+    "pymilvus[model]>=3.0.1",
+    "pymongo>=4.8.0",
+    "pycryptodome>=3.20.0",
+    "python-dotenv>=1.2.3",
+    "python-multipart>=0.0.9",
+    "requests>=2.32.0",
+    "tenacity>=9.0.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.scripts]
+knowledge-base-travel = "knowledge_base_travel:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
