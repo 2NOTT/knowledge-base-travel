@@ -1,6 +1,6 @@
 # 旅游知识库助手
 
-这是课程知识库项目的旅游行业特定版，保留原项目的 LangGraph、混合向量检索、HyDE、联网搜索、RRF、Reranker、SSE 流式输出和 MongoDB 历史记录能力。
+这是面向旅游场景的行业知识库助手，支持 LangGraph、混合向量检索、HyDE、联网搜索、RRF、Reranker、SSE 流式输出和 MongoDB 历史记录。
 
 ## 能力范围
 
@@ -24,7 +24,7 @@
   -> 旅游答案和来源
 ```
 
-三路检索仍然保留；当前 RRF 使用 `chunk_id` 融合两路 Milvus 结果，联网结果因为没有 Milvus 主键，在 Reranker 节点合并。这是对课程原有节点边界的保留。
+系统保留三路检索；当前 RRF 使用 `chunk_id` 融合两路 Milvus 结果，联网结果因为没有 Milvus 主键，在 Reranker 节点合并。
 
 联网搜索是补充召回路线；当 MCP 搜索服务暂时不可用时，系统会保留两路本地检索并继续生成答案。
 
@@ -46,7 +46,7 @@ cp .env.example .env
 
 ## 基础设施
 
-Milvus、MongoDB 和 MinIO 可以使用老师提供的 Docker Compose 文件启动：
+Milvus、MongoDB 和 MinIO 可以使用 Docker Compose 启动：
 
 ```bash
 docker compose up -d
@@ -117,7 +117,7 @@ curl http://127.0.0.1:8001/health
 - 主题：亲子、城市漫游
 ```
 
-系统会把元数据复制到每个切片，并写入 `travel_chunks` 集合。首次导入时会创建新的旅游集合，不会写入课程示例的 `kb_chunks` 集合。
+系统会把元数据复制到每个切片，并写入专用的 `travel_chunks` 集合，不影响其他业务集合。
 
 ## 测试
 
@@ -147,5 +147,5 @@ python -m compileall -q config processor utils web tests
 
 - 提交 `.env.example`，不要提交 `.env`
 - 不提交 `.venv`、模型缓存、临时文件和上传文件
-- 不把课程资料目录整体复制到仓库；只保留项目代码和经授权的示例数据
-- 旅游版作为主版本上传；老师原版可在本地另存为基线，不需要和旅游版混在同一个运行配置里
+- 只提交项目代码和经授权的示例数据，不提交原始资料目录
+- 按 `.env.example` 创建本地 `.env`，运行配置保持单一清晰
