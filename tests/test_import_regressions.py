@@ -15,6 +15,12 @@ from processor.import_processor.nodes.node_entry import NodeEntry
 from processor.import_processor.nodes.node_md_img import NodeMDImg
 from processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from utils.mongo_history_utils import get_recent_messages
+from utils.task_utils import (
+    add_running_task,
+    clear_task,
+    get_running_task_list,
+    remove_running_task,
+)
 
 
 class ImportRegressionTests(unittest.TestCase):
@@ -103,6 +109,14 @@ class ImportRegressionTests(unittest.TestCase):
             result = get_recent_messages("s1", limit=2)
 
         self.assertEqual([item["ts"] for item in result], [2, 3])
+
+    def test_failed_node_is_removed_from_running_tasks(self):
+        task_id = "test-failed-node-status"
+        add_running_task(task_id, "node_import_milvus")
+        remove_running_task(task_id, "node_import_milvus")
+
+        self.assertEqual(get_running_task_list(task_id), [])
+        clear_task(task_id)
 
     def test_minio_image_url_contains_path_separator(self):
         client = SimpleNamespace(fput_object=lambda **kwargs: None)

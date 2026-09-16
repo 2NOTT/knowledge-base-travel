@@ -19,8 +19,16 @@ from starlette.middleware.cors import CORSMiddleware
 
 
 from utils.minio_utils import get_minio_client
-from utils.task_utils import add_running_task, add_done_task, update_task_status, get_task_status, get_done_task_list, \
-    get_running_task_list
+from utils.task_utils import (
+    add_running_task,
+    add_done_task,
+    update_task_status,
+    get_task_status,
+    get_done_task_list,
+    get_running_task_list,
+    get_task_result,
+    set_task_result,
+)
 
 # 1. 创建应用
 # 标题和描述会在Swagger文档中展示
@@ -87,6 +95,7 @@ def run_graph_task(task_id: str, file_dir: str, import_file_path: str):
 
     except Exception as e:
         # 5. 捕获全流程异常，更新任务全局状态为：失败，并记录错误日志（含堆栈）
+        set_task_result(task_id, "error", str(e))
         update_task_status(task_id, "failed")
         logger.info(f"[{task_id}] LangGraph全流程执行失败，异常信息：{str(e)}", exc_info=True)
 
@@ -113,12 +122,19 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
     data_dir = os.path.join(data_based_root_dir, datetime.now().strftime("%Y%m%d"))
     # 初始化任务ID列表，用于返回给前端（一个文件对应一个TaskID）
     task_ids = []
+    allowed_suffixes = {".md", ".pdf"}
+    validated_files = []
 
-    # 2. 遍历处理每个上传的文件（多文件批量处理，各自独立生成TaskID）
     for file in files:
         safe_filename = Path(file.filename or "upload.bin").name
         if safe_filename in {"", ".", ".."}:
             raise HTTPException(status_code=400, detail="上传文件名无效")
+        if Path(safe_filename).suffix.lower() not in allowed_suffixes:
+            raise HTTPException(status_code=400, detail="仅支持上传 Markdown 或 PDF 文件")
+        validated_files.append((file, safe_filename))
+
+    # 2. 遍历处理每个上传的文件（多文件批量处理，各自独立生成TaskID）
+    for file, safe_filename in validated_files:
         # 生成全局唯一TaskID（UUID4），作为单个文件的全流程标识
         task_id = str(uuid.uuid4())
         task_ids.append(task_id)
@@ -202,7 +218,8 @@ async def get_task_progress(task_id: str):
         "task_id": task_id,
         "status": get_task_status(task_id),  # 任务全局状态：pending/processing/completed/failed
         "done_list": get_done_task_list(task_id),  # 已完成的节点/阶段列表
-        "running_list": get_running_task_list(task_id)  # 正在运行的节点/阶段列表
+        "running_list": get_running_task_list(task_id),  # 正在运行的节点/阶段列表
+        "error": get_task_result(task_id, "error", "") or None,
     }
     # 记录状态查询日志，方便追踪前端轮询情况
     logger.info(

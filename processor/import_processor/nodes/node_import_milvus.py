@@ -39,7 +39,7 @@ class NodeImportMilvus(BaseNode):
     def process(self, state: ImportGraphState) -> ImportGraphState:
         chunks, vector_dimension = self._validate_input(state)
         client = self._prepare_collection(vector_dimension)
-        self._clear_old_file(client, chunks[0].get("file_title", ""))
+        self._clear_old_file(client, chunks[0])
         state["chunks"] = self._insert(client, chunks)
         return state
 
@@ -65,13 +65,23 @@ class NodeImportMilvus(BaseNode):
             self._create_collection(client, collection_name, vector_dimension)
         return client
 
-    def _clear_old_file(self, client, file_title: str) -> None:
-        if not file_title:
+    @staticmethod
+    def _build_document_filter(chunk: Dict[str, Any]) -> str:
+        conditions = []
+        for field in ("file_title", "city", "entity_name"):
+            value = str(chunk.get(field) or "").strip()
+            if value:
+                conditions.append(f"{field} == '{escape_milvus_string(value)}'")
+        return " and ".join(conditions)
+
+    def _clear_old_file(self, client, chunk: Dict[str, Any]) -> None:
+        filter_expression = self._build_document_filter(chunk)
+        if not filter_expression:
             return
         try:
             client.delete(
                 collection_name=milvus_config.chunks_collection,
-                filter=f"file_title == '{escape_milvus_string(file_title)}'",
+                filter=filter_expression,
             )
         except Exception as exc:
             raise MilvusError(f"清理旧旅游文档失败: {exc}") from exc

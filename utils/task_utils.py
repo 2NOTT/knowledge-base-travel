@@ -107,6 +107,17 @@ def add_done_task(task_id: str, node_name: str, is_stream:bool = False) -> None:
         task_push_queue(task_id)
 
 
+def remove_running_task(task_id: str, node_name: str, is_stream: bool = False) -> None:
+    """移除失败节点，避免任务失败后仍显示为正在运行。"""
+
+    _ensure_task(task_id)
+    _tasks_running_list[task_id] = [
+        name for name in _tasks_running_list[task_id] if name != node_name
+    ]
+    if is_stream:
+        task_push_queue(task_id)
+
+
 
 def set_task_result(task_id: str, key: str, value: Any) -> None:
     """

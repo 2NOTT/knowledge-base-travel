@@ -7,7 +7,7 @@ import colorlog
 
 from processor.import_processor.import_config import ImportConfig, get_config
 from processor.import_processor.exceptions import ImportProcessError
-from utils.task_utils import add_running_task, add_done_task
+from utils.task_utils import add_running_task, add_done_task, remove_running_task
 
 """
 导入流程节点基类
@@ -104,6 +104,9 @@ class BaseNode(ABC):
 
             return result
         except Exception as e:
+            task_id = state.get("task_id")
+            if task_id:
+                remove_running_task(task_id, self.name)
             self.logger.error(f"{self.name} 执行失败: {e}")
             raise ImportProcessError(
                 message="执行失败",

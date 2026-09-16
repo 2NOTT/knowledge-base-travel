@@ -4,7 +4,7 @@ from typing import TypeVar
 
 from processor.query_processor.state import QueryGraphState
 from tool.logger import logger
-from utils.task_utils import add_running_task, add_done_task
+from utils.task_utils import add_running_task, add_done_task, remove_running_task
 
 # 定义泛型
 T = TypeVar("T")
@@ -31,6 +31,9 @@ class NodeBase(ABC):
             logger.info(f"{self.name} 结束执行")
 
         except Exception as e:
+            session_id = state.get("session_id")
+            if session_id:
+                remove_running_task(session_id, self.name, state.get("is_stream"))
             logger.exception(f"{self.name} 执行异常: {e}")
             raise
 

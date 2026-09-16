@@ -107,6 +107,19 @@ class TravelAdaptationTests(unittest.TestCase):
                 [{"content": "x" * 65536}],
             )
 
+    def test_milvus_reimport_filter_scopes_same_travel_document(self):
+        filter_expression = NodeImportMilvus._build_document_filter(
+            {
+                "file_title": "住宿推荐",
+                "city": "成都",
+                "entity_name": "成都住宿推荐",
+            }
+        )
+        self.assertEqual(
+            filter_expression,
+            "file_title == '住宿推荐' and city == '成都' and entity_name == '成都住宿推荐'",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
