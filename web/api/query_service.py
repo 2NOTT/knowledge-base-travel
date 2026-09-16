@@ -7,6 +7,7 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -97,8 +98,8 @@ async def query(background_tasks: BackgroundTasks, request: QueryRequest):
             "session_id":session_id
         }
     else:
-        # 同步运行
-        run_query_graph(session_id, user_query, is_stream)
+        # 查询图包含同步模型、向量库和联网调用，放入线程池避免阻塞 FastAPI 事件循环。
+        await run_in_threadpool(run_query_graph, session_id, user_query, is_stream)
         status = get_task_status(session_id)
         answer = get_task_result(session_id,"answer","")
         return {

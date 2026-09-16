@@ -14,6 +14,7 @@ from processor.import_processor.nodes.node_document_split import NodeDocumentSpl
 from processor.import_processor.nodes.node_entry import NodeEntry
 from processor.import_processor.nodes.node_md_img import NodeMDImg
 from processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
+from utils.mongo_history_utils import get_recent_messages
 
 
 class ImportRegressionTests(unittest.TestCase):
@@ -57,6 +58,51 @@ class ImportRegressionTests(unittest.TestCase):
         result = NodeMDImg()._process_md_file(content, image_info)
 
         self.assertEqual(result, "before\n![控制面板](http://minio/bucket/panel.png)\nafter")
+
+    def test_markdown_without_images_reaches_document_split(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            md_path = Path(temp_dir) / "chengdu.md"
+            md_path.write_text("# 成都景点\n\n熊猫基地适合亲子游客。", encoding="utf-8")
+
+            state = NodeEntry().process({"import_file_path": str(md_path)})
+            state = NodeMDImg().process(state)
+            result = NodeDocumentSplit().process(state)
+
+        self.assertIn("熊猫基地", result["md_content"])
+        self.assertTrue(result["chunks"])
+
+    def test_recent_messages_returns_latest_in_chronological_order(self):
+        class FakeCursor:
+            def __init__(self):
+                self.documents = [
+                    {"session_id": "s1", "ts": 1},
+                    {"session_id": "s1", "ts": 2},
+                    {"session_id": "s1", "ts": 3},
+                ]
+
+            def sort(self, field, direction):
+                self.documents.sort(key=lambda item: item[field], reverse=direction < 0)
+                return self
+
+            def limit(self, value):
+                self.documents = self.documents[:value]
+                return self
+
+            def __iter__(self):
+                return iter(self.documents)
+
+        class FakeCollection:
+            def find(self, _query):
+                return FakeCursor()
+
+        fake_tool = SimpleNamespace(chat_message=FakeCollection())
+        with patch(
+            "utils.mongo_history_utils.get_history_mongo_tool",
+            return_value=fake_tool,
+        ):
+            result = get_recent_messages("s1", limit=2)
+
+        self.assertEqual([item["ts"] for item in result], [2, 3])
 
     def test_minio_image_url_contains_path_separator(self):
         client = SimpleNamespace(fput_object=lambda **kwargs: None)

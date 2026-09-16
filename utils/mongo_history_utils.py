@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from dotenv import load_dotenv
-from pymongo import ASCENDING, MongoClient
+from pymongo import DESCENDING, MongoClient
 
 load_dotenv()
 
@@ -115,16 +115,16 @@ def update_message_item_names(ids: List[str], item_names: List[str]) -> int:
 
 
 def get_recent_messages(session_id: str, limit: int = 10) -> List[Dict[str, Any]]:
-    """按时间正序读取指定会话的最近消息；数据库不可用时返回空列表。"""
+    """读取指定会话的最近消息，并按时间正序返回；数据库不可用时返回空列表。"""
 
     try:
         cursor = (
             get_history_mongo_tool()
             .chat_message.find({"session_id": session_id})
-            .sort("ts", ASCENDING)
+            .sort("ts", DESCENDING)
             .limit(limit)
         )
-        return list(cursor)
+        return list(reversed(list(cursor)))
     except Exception as exc:
         logging.error("读取旅游历史失败: %s", exc)
         return []

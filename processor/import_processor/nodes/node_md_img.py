@@ -43,6 +43,8 @@ class NodeMDImg(BaseNode):
 
         # 步骤1：初始化数据，获取MD核心信息
         md_content, md_path_obj, images_dir = self._step_1_get_content(state)
+        # 即使没有图片，后续文档切分节点也需要原始 Markdown 内容。
+        state["md_content"] = md_content
         if not images_dir.exists():
             self.logger.info("无图片文件夹，跳过图片处理")
             return state
