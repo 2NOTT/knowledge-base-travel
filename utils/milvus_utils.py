@@ -46,7 +46,16 @@ def build_travel_expr(cities: list[str] | None = None, entities: list[str] | Non
     """按城市或旅游主体构造可选过滤条件；两者都没有时执行全库检索。"""
 
     expressions = []
-    city_expr = build_in_expr("city", cities)
+    # 课程资料的 city 可为“杭州、乌镇”或“云南多城市”，文件名保留目的地。
+    regions = {"昆明": "云南", "大理": "云南", "丽江": "云南"}
+    destinations = {str(city).strip() for city in (cities or []) if str(city).strip()}
+    destinations.update(regions[city] for city in tuple(destinations) if city in regions)
+    city_conditions = []
+    for city in sorted(destinations):
+        literal = city.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = json.dumps(f"%{literal}%", ensure_ascii=False)
+        city_conditions.extend(f"{field} like {pattern}" for field in ("city", "file_title"))
+    city_expr = " or ".join(city_conditions)
     entity_expr = build_in_expr("entity_name", entities)
     if city_expr:
         expressions.append(city_expr)

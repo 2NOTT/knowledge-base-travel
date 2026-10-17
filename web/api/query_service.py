@@ -10,7 +10,9 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
+from web.api.import_service import app as import_app
 from processor.query_processor.main_graph import KBQueryWorkflow
 from utils.mongo_history_utils import clear_history, get_recent_messages
 from utils.sse_utils import create_sse_queue, SSEEvent, push_to_session, sse_generator
@@ -31,6 +33,8 @@ app = FastAPI(
     title="旅游知识库查询 API",
     description="景点、线路、住宿、美食和交通的旅游知识库查询接口",
 )
+app.mount("/assets", StaticFiles(directory=Path(__file__).resolve().parent.parent / "assets"), name="assets")
+app.mount("/import-api", import_app)
 
 # 2. 跨域
 app.add_middleware(
@@ -42,6 +46,7 @@ app.add_middleware(
 )
 
 # 3. 静态页面路由
+@app.get("/")
 @app.get("/chat.html")  # 对外访问地址
 async def chat():
     current_dir_parent_path = Path(__file__).absolute().parent.parent
@@ -196,7 +201,7 @@ async def health():
     """
     检查服务是否正常
     """
-    return {"ok": True}
+    return {"ok": True, "service": "travel-query"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8001)

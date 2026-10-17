@@ -1,898 +1,108 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>旅游知识库助手</title>
-  <style>
-    :root{
-      --bg:#f3f5f7;
-      --panel:#ffffff;
-      --text:#1f2d3d;
-      --muted:#7a869a;
-      --brand:#1aa7ff;
-      --brand2:#5b7cfa;
-      --bubble-user:#1aa7ff;
-      --bubble-bot:#ffffff;
-      --border:#e6e9ef;
-      --shadow:0 10px 30px rgba(31,45,61,.12);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(26,167,255,.18), transparent 60%),
-                  radial-gradient(1000px 500px at 90% 10%, rgba(91,124,250,.18), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:18px;
-    }
-    .app{
-      width:100%;
-      max-width:980px;
-      height:min(820px, 92vh);
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
-    .topbar{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--border);
-      background:linear-gradient(90deg, rgba(26,167,255,.10), rgba(91,124,250,.10));
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:240px;
-    }
-    .logo{
-      width:36px;height:36px;border-radius:10px;
-      background:linear-gradient(135deg, var(--brand), var(--brand2));
-      box-shadow:0 8px 18px rgba(26,167,255,.25);
-    }
-    .title{
-      display:flex;
-      flex-direction:column;
-      line-height:1.1;
-    }
-    .title strong{font-size:14px}
-    .title span{font-size:12px;color:var(--muted);margin-top:3px}
-    .top-actions{
-      margin-left:auto;
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    .pill{
-      font-size:12px;
-      color:var(--muted);
-      border:1px solid var(--border);
-      padding:6px 10px;
-      border-radius:999px;
-      background:#fff;
-    }
-    .btn{
-      border:none;
-      background:linear-gradient(135deg, var(--brand), var(--brand2));
-      color:#fff;
-      padding:8px 12px;
-      border-radius:10px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-
-    .chat{
-      flex:1;
-      overflow:auto;
-      padding:16px 14px 10px;
-      background:linear-gradient(180deg, rgba(26,167,255,.05), transparent 40%),
-                 linear-gradient(0deg, rgba(91,124,250,.05), transparent 45%);
-    }
-    .dayline{
-      text-align:center;
-      color:var(--muted);
-      font-size:12px;
-      margin:6px 0 14px;
-    }
-    .msg{
-      display:flex;
-      gap:10px;
-      margin:10px 0;
-      align-items:flex-end;
-    }
-    .msg.user{justify-content:flex-end}
-    /* 关键：只让“消息内容容器”(排除头像)在 flex 中可伸缩，避免被压到“1 个字宽”导致竖排换行 */
-    .msg > div:not(.avatar){
-      flex:1;
-      min-width:0;
-    }
-    .msg.user > div:not(.avatar){
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-    }
-    .avatar{
-      width:34px;height:34px;border-radius:10px;
-      background:#e9eef7;
-      display:flex;align-items:center;justify-content:center;
-      font-size:14px;
-      color:#3b4a5a;
-      flex:0 0 auto;
-    }
-    .avatar.bot{background:linear-gradient(135deg, rgba(26,167,255,.18), rgba(91,124,250,.18))}
-    .bubble{
-      max-width:min(720px, 76%);
-      display:inline-block;
-      border-radius:14px;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      background:var(--bubble-bot);
-      position:relative;
-      line-height:1.55;
-      font-size:14px;
-      white-space:pre-wrap;
-      overflow-wrap: break-word;
-    }
-    .msg.user .bubble{
-      background:var(--bubble-user);
-      color:#fff;
-      border-color:transparent;
-    }
-    .meta{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:6px;
-    }
-    .msg.user .meta{color:rgba(255,255,255,.85)}
-    details.progress{
-      margin-top:8px;
-      border:1px dashed rgba(122,134,154,.45);
-      border-radius:12px;
-      padding:8px 10px;
-      background:rgba(122,134,154,.06);
-    }
-    details.progress summary{
-      cursor:pointer;
-      user-select:none;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .progress ul{margin:8px 0 0 18px;padding:0}
-    .progress li{margin:4px 0;font-size:12px;color:#56657a}
-
-    .answer-images{
-      margin-top:10px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .answer-images img{
-      display: block;
-      max-width: min(100%, 600px);
-      max-height: 600px;
-      width: auto;
-      height: auto;
-      border-radius:12px;
-      border:1px solid var(--border);
-      box-shadow:0 10px 24px rgba(31,45,61,.10);
-      background:#fff;
-    }
-    .answer-images a{
-      font-size:12px;
-      color:var(--muted);
-      text-decoration:none;
-      word-break:break-all;
-    }
-
-    .typing{
-      display:inline-flex;gap:6px;align-items:center;
-    }
-    .dot{
-      width:7px;height:7px;border-radius:50%;
-      background:#9aa6b2;
-      animation:bounce 1.2s infinite ease-in-out;
-    }
-    .dot:nth-child(2){animation-delay:.15s}
-    .dot:nth-child(3){animation-delay:.3s}
-    @keyframes bounce{
-      0%,80%,100%{transform:translateY(0);opacity:.6}
-      40%{transform:translateY(-5px);opacity:1}
-    }
-
-    .composer{
-      border-top:1px solid var(--border);
-      padding:12px 14px;
-      display:flex;
-      gap:10px;
-      align-items:flex-end;
-      background:#fff;
-    }
-    textarea{
-      flex:1;
-      resize:none;
-      min-height:44px;
-      max-height:140px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      outline:none;
-      font-size:14px;
-      line-height:1.5;
-    }
-    textarea:focus{border-color:rgba(26,167,255,.6); box-shadow:0 0 0 3px rgba(26,167,255,.12)}
-    .send{
-      width:88px;
-      height:44px;
-      border:none;
-      border-radius:12px;
-      cursor:pointer;
-      font-size:14px;
-      color:#fff;
-      background:linear-gradient(135deg, var(--brand), var(--brand2));
-    }
-    .send:disabled{opacity:.6;cursor:not-allowed}
-    .hint{
-      padding:0 14px 12px;
-      color:var(--muted);
-      font-size:12px;
-      background:#fff;
-    }
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      border:1px solid var(--border);
-      padding:1px 6px;
-      border-radius:6px;
-      background:#f7f9fc;
-      color:#3b4a5a;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#245b49">
+  <title>行知 · 旅游知识库助手</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23245b49'/%3E%3Cpath d='M32 10 43 43 32 36 21 43Z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/travel.css">
+  <script type="module" src="/assets/chat.js"></script>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div class="title">
-          <strong>旅游知识库助手</strong>
-          <span id="subTitle">在线 · 景点、线路、住宿、美食与交通</span>
-        </div>
+  <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8 8H5l-3 2 1.5-5A8 8 0 1 1 20 11.5Z"/><path d="M7 11h.01M11 11h.01M15 11h.01"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m5 12 14 0M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m5 12 14-7-5 14-3-5-6-2Zm6 2 8-9"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m2 20 7-13 5 9 3-5 5 9H2ZM6 12l3 2 2-2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 11h16M8 15h3M8 18h6"/></symbol>
+    <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 7v14M21 11v10M3 17h18M3 10h5a3 3 0 0 1 3 3v4M11 9h6a4 4 0 0 1 4 4v4"/></symbol>
+    <symbol id="i-food" viewBox="0 0 24 24"><path d="M5 3v6a3 3 0 0 0 6 0V3M8 3v18M19 3c-3 3-4 6-4 10h4V3Zm0 10v8"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="16" rx="4"/><path d="M5 11h14M12 3v8M8 15h.01M16 15h.01M8 19l-2 3M16 19l2 3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+  </defs></svg>
+  <div class="app-shell">
+    <button class="sidebar-scrim" id="sidebarScrim" aria-label="关闭导航" hidden></button>
+    <aside class="sidebar" id="sidebar" aria-label="主导航">
+      <a class="brand" href="/chat.html" aria-label="行知首页">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20"/><path d="M24 1v7M24 40v7M1 24h7M40 24h7"/><path class="compass-needle" d="m24 10 7 23-7-5-7 5Z"/></svg>
+        <span><strong>行知</strong><small>R O A M</small></span>
+      </a>
+      <button class="new-chat" id="newChat"><svg><use href="#i-plus"/></svg>新建对话</button>
+      <nav class="primary-nav">
+        <button class="nav-item active" id="chatNav" aria-current="page"><svg><use href="#i-chat"/></svg>旅行问答</button>
+        <button class="nav-item" id="importNav"><svg><use href="#i-file"/></svg>资料导入</button>
+      </nav>
+      <div class="recent-section">
+        <p class="section-label">最近对话</p>
+        <div id="recentList" class="recent-list"></div>
+        <div class="recent-empty" id="recentEmpty"><svg><use href="#i-map"/></svg><p>开始你的第一段旅程</p></div>
       </div>
-      <div class="top-actions">
-        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;color:var(--muted);margin-right:10px;">
-          <input type="checkbox" id="streamToggle" checked> 流式输出
-        </label>
-        <span class="pill" id="apiPill">API: 未连接</span>
-        <button class="btn" id="btnClear">清空对话</button>
+      <div class="sidebar-footer">
+        <button id="connectionStatus" class="connection-status" title="此状态仅表示问答服务连接，不代表知识库检索可用。"><span class="status-dot"></span><span id="connectionText">正在连接服务</span><svg><use href="#i-info"/></svg></button>
       </div>
-    </div>
-
-    <div class="chat" id="chat">
-      <div class="dayline">今天</div>
-      <div class="msg bot">
-        <div class="avatar bot">旅游</div>
-        <div>
-          <div class="bubble">你好，我是旅游知识库助手。你可以直接询问景点、线路、住宿、美食或交通。</div>
-          <div class="meta">提示：可以问“成都有哪些适合亲子游客的景点？”</div>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="menuButton" aria-label="打开导航" aria-expanded="false" aria-controls="sidebar"><svg><use href="#i-menu"/></svg></button>
+        <div class="page-title"><strong id="pageTitle">旅行问答</strong><span>旅游知识库助手</span></div>
+        <div class="top-actions" id="chatActions">
+          <label class="stream-control"><span>流式回答</span><input id="streamToggle" type="checkbox" role="switch" checked><span class="switch-track" aria-hidden="true"></span></label>
+          <span class="action-divider"></span>
+          <button class="quiet-button" id="btnClear" aria-label="清空当前对话"><svg><use href="#i-trash"/></svg><span>清空对话</span></button>
         </div>
-      </div>
-    </div>
-
-    <div class="composer">
-      <textarea id="input" placeholder="请输入问题（Enter 发送，Shift+Enter 换行）"></textarea>
-      <button class="send" id="send">发送</button>
-    </div>
-    <div class="hint">快捷键：<span class="kbd">Enter</span> 发送，<span class="kbd">Shift</span>+<span class="kbd">Enter</span> 换行</div>
-  </div>
-
-  <script>
-
-    // 模拟后端API地址
-    const API_BASE = 'http://127.0.0.1:8001';
-
-    // 默认同源；如你把页面单独打开（file://），可改成 http://127.0.0.1:8001
-    //const API_BASE = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8001';
-    const chatEl = document.getElementById('chat');
-    const inputEl = document.getElementById('input');
-    const sendBtn = document.getElementById('send');
-    const apiPill = document.getElementById('apiPill');
-    const btnClear = document.getElementById('btnClear');
-    const streamToggle = document.getElementById('streamToggle');
-
-    // Session ID Logic
-    let sessionId = localStorage.getItem('kb_session_id');
-    if (!sessionId) {
-      sessionId = 'sess-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('kb_session_id', sessionId);
-    }
-
-    function scrollToBottom(){
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
-    function nowTime(){
-      const d = new Date();
-      return d.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
-    }
-    function formatTime(ts){
-      if(!ts) return nowTime();
-      const d = new Date(Number(ts) * 1000);
-      if(Number.isNaN(d.getTime())) return nowTime();
-      return d.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
-    }
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
-    }
-
-    function isImageUrl(url){
-      // 增加宽松度，有些 url 可能后面跟了奇怪的参数
-      // 只要包含 .jpg .png 等扩展名，且后面是 ? # 或 结束，或者被某些标点截断前
-      // 简单判断：路径部分以图片后缀结尾
-      try {
-        const u = new URL(url);
-        return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(u.pathname);
-      } catch (e) {
-        // 如果 new URL 失败（比如相对路径或非法字符），退回正则匹配
-        return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(url || '');
-      }
-    }
-
-    function normalizeUrl(rawUrl){
-      const s = String(rawUrl || '').trim();
-      if(!s) return '';
-      // 尽量保留原始 URL，但把空格编码，避免 img src 失败
-      return s.replace(/\s/g, '%20');
-    }
-
-    function dedupeKeepOrder(arr){
-      const seen = new Set();
-      const out = [];
-      for(const x of (Array.isArray(arr) ? arr : [])){
-        const v = String(x || '');
-        if(!v) continue;
-        if(seen.has(v)) continue;
-        seen.add(v);
-        out.push(v);
-      }
-      return out;
-    }
-
-    function extractUrlsLoose(text){
-      const s = String(text || '');
-      // 简单正则提取：匹配 http/https 开头，直到遇到空白字符
-      // [^\s] 包含中文、特殊符号等，直到遇到换行或空格
-      const regex = /(https?:\/\/[^\s]+)/g;
-      const matches = s.match(regex) || [];
-      const urls = [];
-      
-      // 去除首尾标点
-      const trimTailPunct = (u) => String(u || '').replace(/[)\]}'">，。,;；\]】）＞]+$/g, '');
-      const trimHeadPunct = (u) => String(u || '').replace(/^[<([{'"]+|^[＜（【\[]+/g, '');
-
-      for(const m of matches){
-        let u = trimHeadPunct(trimTailPunct(m));
-        // 简单清洗可能混入的结尾
-        if(u) urls.push(u);
-      }
-      return dedupeKeepOrder(urls);
-    }
-
-    function parseImagesFromTextLoosely(text){
-      const urls = extractUrlsLoose(text).filter(isImageUrl);
-      return dedupeKeepOrder(urls);
-    }
-
-    function findLastImageMarkerIndex(raw){
-      const s = String(raw || '');
-      // 支持多种写法：【图片】、【 图片 】、[图片]、[ 图片 ]
-      const re = /【\s*图片\s*】|\[\s*图片\s*\]/g;
-      let m;
-      let lastIdx = -1;
-      let lastLen = 0;
-      while((m = re.exec(s)) !== null){
-        lastIdx = m.index;
-        lastLen = m[0].length;
-      }
-      return { idx: lastIdx, len: lastLen };
-    }
-
-    function parseAnswerAndImages(text){
-      const raw = String(text || '');
-      const { idx, len } = findLastImageMarkerIndex(raw);
-      if(idx === -1) return { text: raw, images: [] };
-
-      const before = raw.slice(0, idx).trimEnd();
-      const after = raw.slice(idx + len).trim();
-      const urls = [];
-
-      // 优先按“每行一个 URL”的方式解析，允许 URL 中包含空格
-      const lines = after.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      for(const line of lines){
-        if(line.startsWith('http://') || line.startsWith('https://')){
-          urls.push(line);
-        }else{
-          // 兼容同一行包含多个 URL 的情况
-          const matches = extractUrlsLoose(line);
-          for(const u of matches){
-            urls.push(u);
-          }
-        }
-      }
-
-      // 去重保序 + 过滤图片链接
-      const seen = new Set();
-      const images = [];
-      for(const u of urls){
-        const normalized = normalizeUrl(u);
-        if(!isImageUrl(normalized)) continue;
-        if(seen.has(normalized)) continue;
-        seen.add(normalized);
-        images.push(normalized);
-      }
-      return { text: before, images };
-    }
-
-    function shouldShowImagesByAnswer(answerText){
-      const t = String(answerText || '');
-      // 常见“需要看图/见图/如下图”的表述
-      const keywords = [
-        '如图', '如下图', '见图', '见下图', '下图', '上图',
-        '图片', '示意图', '结构图', '外观', '接线图', '电路图', '原理图', '安装图', '尺寸图', '截图'
-      ];
-      return keywords.some(k => t.includes(k));
-    }
-
-    function renderAnswerWithImages(containerEl, answerText, candidateImageUrls){
-      const { text, images: imagesFromBlock } = parseAnswerAndImages(answerText);
-      const candidates = Array.isArray(candidateImageUrls)
-        ? candidateImageUrls.map(normalizeUrl).filter(isImageUrl)
-        : [];
-      const hasBlockImages = imagesFromBlock && imagesFromBlock.length > 0;
-      
-      // 使用宽松提取
-      const looseImages = extractUrlsLoose(answerText).map(normalizeUrl).filter(isImageUrl);
-      
-      // 只要后端给了候选图片，就展示（避免答案没写“如图”但用户仍需要看图）
-      // 或者从文本里提取到了图片 URL
-      const shouldShow = hasBlockImages || (candidates.length > 0) || (looseImages.length > 0);
-      
-      // 优先级：Block 显式标记 > 后端候选 > 文本宽松提取
-      // 注意：这里做个并集可能更好，防止漏掉
-      const allImages = new Set([
-          ...(hasBlockImages ? imagesFromBlock : []),
-          ...candidates,
-          ...looseImages
-      ]);
-      const images = Array.from(allImages);
-
-      containerEl.textContent = '';
-
-      if((text || '').trim().length > 0){
-        const textEl = document.createElement('div');
-        textEl.className = 'answer-text';
-        textEl.textContent = text;
-        containerEl.appendChild(textEl);
-      }else{
-        const textEl = document.createElement('div');
-        textEl.className = 'answer-text';
-        textEl.textContent = '（已完成，但未返回答案）';
-        containerEl.appendChild(textEl);
-      }
-
-      if(images && images.length > 0){
-        const imgWrap = document.createElement('div');
-        imgWrap.className = 'answer-images';
-        for(const url of images){
-          const safeUrl = normalizeUrl(url);
-          const img = document.createElement('img');
-          img.loading = 'lazy';
-          img.src = safeUrl;
-          img.alt = '参考图片';
-          img.referrerPolicy = 'no-referrer';
-          img.addEventListener('error', () => {
-            img.style.display = 'none';
-          });
-          imgWrap.appendChild(img);
-
-          const link = document.createElement('a');
-          link.href = safeUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = url;
-          imgWrap.appendChild(link);
-        }
-        containerEl.appendChild(imgWrap);
-      }
-    }
-
-    function addUserMsg(text){
-      const html = `
-        <div class="msg user">
-          <div>
-            <div class="bubble">${escapeHtml(text)}</div>
-            <div class="meta">${nowTime()}</div>
+      </header>
+      <div class="notice" id="notice" role="status" hidden></div>
+      <section class="chat-view" id="chatView" aria-label="旅行问答">
+        <div class="chat-scroll" id="chatScroll">
+          <section class="welcome" id="welcome">
+            <h1>下一站，<span>想去哪里？</span></h1>
+            <p class="welcome-kicker">想去的地方，总有答案</p>
+            <p class="welcome-description">把目的地、出行天数和偏好告诉我，一起把旅途安排好。</p>
+          </section>
+          <div class="messages" id="chat" role="log" aria-label="对话记录" aria-live="polite" aria-relevant="additions" hidden></div>
+          <div class="composer-slot" id="welcomeComposerSlot">
+            <form class="composer" id="composer">
+              <label class="sr-only" for="input">你的旅行问题</label>
+              <textarea id="input" rows="3" maxlength="6000" placeholder="想去成都玩三天，怎么安排更轻松？"></textarea>
+              <div class="composer-toolbar"><span class="composer-caption" id="composerStatus"><svg><use href="#i-file"/></svg>写下你的旅行想法</span><span class="keyboard-hint">按 <kbd>Enter</kbd> 发送，<kbd>Shift + Enter</kbd> 换行</span><button class="send-button" id="send" type="submit" aria-label="发送问题" disabled><svg><use href="#i-send"/></svg></button></div>
+            </form>
           </div>
-          <div class="avatar">我</div>
-        </div>
-      `;
-      chatEl.insertAdjacentHTML('beforeend', html);
-      scrollToBottom();
-    }
-
-    function addUserMsgWithTime(text, ts){
-      const html = `
-        <div class="msg user">
-          <div>
-            <div class="bubble">${escapeHtml(text)}</div>
-            <div class="meta">${formatTime(ts)}</div>
-          </div>
-          <div class="avatar">我</div>
-        </div>
-      `;
-      chatEl.insertAdjacentHTML('beforeend', html);
-      scrollToBottom();
-    }
-
-    function addBotMsgWithTime(text, ts, imageUrls){
-      const id = 'bot-his-' + Math.random().toString(36).slice(2);
-      const html = `
-        <div class="msg bot" id="${id}">
-          <div class="avatar bot">知识库</div>
-          <div>
-            <div class="bubble"><div class="answer"></div></div>
-            <div class="meta">${formatTime(ts)}</div>
-          </div>
-        </div>
-      `;
-      chatEl.insertAdjacentHTML('beforeend', html);
-      const el = document.getElementById(id);
-      if(el){
-        const answerEl = el.querySelector('.answer');
-        renderAnswerWithImages(answerEl, text || '', imageUrls || []);
-      }
-      scrollToBottom();
-    }
-
-    function addBotMsgSkeleton(){
-      const id = 'bot-' + Math.random().toString(36).slice(2);
-      const html = `
-        <div class="msg bot" id="${id}">
-          <div class="avatar bot">知识库</div>
-          <div style="min-width: 180px;">
-            <div class="bubble">
-              <span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-              <details class="progress" open>
-                <summary>阶段进度（等待中）</summary>
-                <ul></ul>
-              </details>
+          <section class="inspiration" id="inspiration">
+            <div class="topic-list" aria-label="旅行提问主题">
+              <button data-prompt="成都有哪些适合第一次去的景点？"><svg><use href="#i-mountain"/></svg>景点探索</button>
+              <button data-prompt="去成都玩三天，怎么安排路线更轻松？"><svg><use href="#i-calendar"/></svg>行程规划</button>
+              <button data-prompt="第一次去成都，住在哪个区域比较方便？"><svg><use href="#i-bed"/></svg>住宿推荐</button>
+              <button data-prompt="成都有哪些值得尝试的当地美食？"><svg><use href="#i-food"/></svg>当地美食</button>
+              <button data-prompt="从成都机场到市中心有哪些交通方式？"><svg><use href="#i-train"/></svg>交通出行</button>
             </div>
-            <div class="meta">${nowTime()}</div>
-          </div>
+            <div class="inspiration-heading"><h2>从一个旅行灵感开始</h2><p>点击卡片，完善你的旅行提问。</p></div>
+            <div class="destination-grid">
+              <button class="destination-card" data-prompt="想去成都玩三天，喜欢美食和慢生活，可以怎么安排行程？"><span class="destination-image chengdu" role="img" aria-label="成都茶馆旅行灵感配图"></span><span class="destination-copy"><strong>成都 · 慢下来</strong><span>喝杯盖碗茶，发现街巷里的烟火气。<br>三天的慢旅行，可以怎么安排？</span><svg><use href="#i-arrow"/></svg></span></button>
+              <button class="destination-card" data-prompt="去杭州玩两天，想游西湖和体验当地文化，怎么安排路线？"><span class="destination-image hangzhou" role="img" aria-label="西湖亭台旅行灵感配图"></span><span class="destination-copy"><strong>杭州 · 山水间</strong><span>沿着西湖走走，把时间留给山水。<br>两天的小旅行，有哪些好去处？</span><svg><use href="#i-arrow"/></svg></span></button>
+              <button class="destination-card" data-prompt="第一次去云南玩一周，想看自然风景和古城，适合怎么安排路线？"><span class="destination-image yunnan" role="img" aria-label="云南雪山古城旅行灵感配图"></span><span class="destination-copy"><strong>云南 · 去远方</strong><span>在古城与雪山之间，换一种生活节奏。<br>第一次去，适合怎样的路线？</span><svg><use href="#i-arrow"/></svg></span></button>
+            </div>
+          </section>
         </div>
-      `;
-      chatEl.insertAdjacentHTML('beforeend', html);
-      scrollToBottom();
-      return document.getElementById(id);
-    }
-
-    function renderProgress(botMsgEl, doneList, runningList, status){
-      const details = botMsgEl.querySelector('details.progress');
-      const summary = details.querySelector('summary');
-      const ul = details.querySelector('ul');
-      const done = Array.isArray(doneList) ? doneList : [];
-      const running = Array.isArray(runningList) ? runningList : [];
-      const totalDone = done.length;
-      const totalRun = running.length;
-
-      const statusMap = {
-        'processing': '处理中',
-        'completed': '已完成',
-        'failed': '失败',
-        'pending': '等待中',
-      };
-      const displayStatus = statusMap[status] || status || 'unknown';
-
-      summary.textContent = `阶段进度（已完成${totalDone}，进行中${totalRun}，状态：${displayStatus}）`;
-
-      const lines = [
-        ...done.map(x => `✅ ${x}`),
-        ...running.map(x => `⏳ ${x}`)
-      ];
-      ul.innerHTML = '';
-      if(lines.length === 0){
-        ul.insertAdjacentHTML('beforeend', '<li>暂无进度</li>');
-      }else{
-        for(const line of lines){
-          ul.insertAdjacentHTML('beforeend', `<li>${escapeHtml(line)}</li>`);
-        }
-      }
-    }
-
-    function finalizeBotAnswer(botMsgEl, answer, error, imageUrls){
-      const bubble = botMsgEl.querySelector('.bubble');
-      const progress = botMsgEl.querySelector('details.progress');
-      const err = (error || '').trim();
-
-      if(err){
-        const progressEl = progress ? progress : null;
-        if(progressEl) {
-            progressEl.remove();
-            progressEl.removeAttribute('open');
-        }
-        bubble.textContent = '';
-        const errEl = document.createElement('div');
-        errEl.className = 'answer';
-        errEl.textContent = `抱歉，本次处理失败：\n${err}`;
-        bubble.appendChild(errEl);
-        if(progressEl) bubble.appendChild(progressEl);
-        return;
-      }
-
-      const progressEl = progress ? progress : null;
-      if(progressEl) {
-        progressEl.remove();
-        progressEl.removeAttribute('open'); // 完成后自动收起
-      }
-      bubble.textContent = '';
-      const answerEl = document.createElement('div');
-      answerEl.className = 'answer';
-      bubble.appendChild(answerEl);
-      renderAnswerWithImages(answerEl, answer || '', imageUrls || []);
-      if(progressEl) bubble.appendChild(progressEl);
-    }
-
-    async function apiHealth(){
-      try{
-        const res = await fetch(`${API_BASE}/health`);
-        if(!res.ok) throw new Error('health not ok');
-        apiPill.textContent = `API: 已连接`;
-      }catch(e){
-        apiPill.textContent = `API: 未连接`;
-      }
-    }
-
-    async function loadHistory(){
-      try{
-        const res = await fetch(`${API_BASE}/history/${sessionId}`);
-        if(!res.ok) return;
-        const data = await res.json();
-        const items = Array.isArray(data.items) ? data.items : [];
-        if(items.length === 0) return;
-        // 保留首条欢迎消息，其余先清空再渲染历史
-        const nodes = Array.from(chatEl.querySelectorAll('.msg'));
-        for(let i=1;i<nodes.length;i++) nodes[i].remove();
-        for(const item of items){
-          if(item.role === 'user'){
-            addUserMsgWithTime(item.text || '', item.ts);
-          }else{
-            addBotMsgWithTime(item.text || '', item.ts, item.image_urls || []);
-          }
-        }
-        scrollToBottom();
-      }catch(_){}
-    }
-
-    async function submitQuery(text){
-      const isStream = streamToggle.checked;
-      const res = await fetch(`${API_BASE}/query`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          query: text,
-          session_id: sessionId,
-          is_stream: isStream
-        })
-      });
-      if(!res.ok){
-        const msg = await res.text();
-        throw new Error(msg || '请求失败');
-      }
-      return await res.json();
-    }
-
-    async function poll(taskId, botMsgEl){
-      const typing = botMsgEl.querySelector('.typing');
-      const interval = setInterval(async () => {
-        try{
-          const res = await fetch(`${API_BASE}/status/${taskId}`);
-          const data = await res.json();
-          renderProgress(botMsgEl, data.done_list, data.running_list, data.status);
-
-          if(data.status === 'completed'){
-            if(typing) typing.remove();
-            finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || []);
-            clearInterval(interval);
-            sendBtn.disabled = false;
-          }else if(data.status === 'failed'){
-            if(typing) typing.remove();
-            finalizeBotAnswer(botMsgEl, data.answer, data.error || 'failed', data.image_urls || []);
-            clearInterval(interval);
-            sendBtn.disabled = false;
-          }
-        }catch(e){
-          // 轮询错误不立刻终止，让用户稍后重试
-        }
-      }, 1200);
-    }
-
-    async function onSend(){
-      console.log('[perf] A onSend start', performance.now());
-      const text = (inputEl.value || '').trim();
-      if(!text) return;
-      inputEl.value = '';
-      addUserMsg(text);
-      const botMsgEl = addBotMsgSkeleton();
-      sendBtn.disabled = true;
-
-      try{
-        const isStream = streamToggle.checked;
-        console.log('[perf] B submitQuery start', performance.now(), { isStream });
-        const data = await submitQuery(text);
-        console.log('[perf] B submitQuery end', performance.now(), data);
-        
-        // 渲染初始状态
-        renderProgress(botMsgEl, [], [], 'pending');
-
-        if (!isStream) {
-          // 非流式：直接拿到结果
-          // data: { session_id, answer, done_list, error, message }
-          renderProgress(botMsgEl, data.done_list || [], [], 'completed');
-          finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || []);
-          sendBtn.disabled = false;
-          return;
-        }
-
-        // 流式：SSE
-        const { session_id } = data; // 此时 backend 返回 session_id
-        
-        const bubble = botMsgEl.querySelector('.bubble');
-        let answerEl = bubble.querySelector('.answer');
-        if(!answerEl){
-          answerEl = document.createElement('div');
-          answerEl.className = 'answer';
-          bubble.insertBefore(answerEl, bubble.firstChild);
-        }
-
-        const es = new EventSource(`${API_BASE}/stream/${session_id}`);
-        console.log('[perf] C EventSource created', performance.now(), { session_id });
-        let rawAnswerText = '';
-
-        es.addEventListener('progress', (e) => {
-          try{
-            const d = JSON.parse(e.data || '{}');
-            renderProgress(botMsgEl, d.done_list, d.running_list, d.status);
-            // 当进度状态已完成时，提前结束“...”等待态
-            if(d && d.status === 'completed'){
-              const typing = botMsgEl.querySelector('.typing');
-              if(typing) typing.remove();
-              // 防止后端未发送 final 导致按钮一直禁用
-              sendBtn.disabled = false;
-            }
-          }catch(_){}
-        });
-
-        es.addEventListener('delta', (e) => {
-          try{
-            const d = JSON.parse(e.data || '{}');
-            const delta = d.delta || '';
-            if(delta){
-              rawAnswerText += delta;
-              // 即使后端未发送 final，也尽可能在流式过程中渲染图片
-              renderAnswerWithImages(answerEl, rawAnswerText, []);
-              scrollToBottom();
-            }
-          }catch(_){}
-        });
-
-        es.addEventListener('final', (e) => {
-          const typing = botMsgEl.querySelector('.typing');
-          if(typing) typing.remove();
-          // 收起进度条
-          const progress = botMsgEl.querySelector('details.progress');
-          if(progress) progress.removeAttribute('open');
-          
-          try{
-            const d = JSON.parse(e.data || '{}');
-            // 流式 delta 可能不包含“【图片】/图片列表”，最终包的 d.answer 才是完整答案；优先使用 d.answer
-            const finalText = (d && typeof d.answer === 'string' && d.answer.trim().length > 0) ? d.answer : (rawAnswerText || answerEl.textContent || '');
-            renderAnswerWithImages(answerEl, finalText, d.image_urls || []);
-          }catch(_){}
-          es.close();
-          sendBtn.disabled = false;
-        });
-
-        es.addEventListener('final_answer', (e) => {
-           // 响应用户的 final_answer 信号，确保图片渲染
-          const typing = botMsgEl.querySelector('.typing');
-          if(typing) typing.remove();
-          const progress = botMsgEl.querySelector('details.progress');
-          if(progress) progress.removeAttribute('open');
-          
-          try{
-            const d = JSON.parse(e.data || '{}');
-            const finalText = (d && typeof d.answer === 'string' && d.answer.trim().length > 0) ? d.answer : (rawAnswerText || answerEl.textContent || '');
-            renderAnswerWithImages(answerEl, finalText, d.image_urls || []);
-          }catch(_){}
-          es.close();
-          sendBtn.disabled = false;
-        });
-
-        es.addEventListener('error', (e) => {
-          const typing = botMsgEl.querySelector('.typing');
-          if(typing) typing.remove();
-          // 收起进度条
-          const progress = botMsgEl.querySelector('details.progress');
-          if(progress) progress.removeAttribute('open');
-
-          try{
-            const msg = e && e.data ? (JSON.parse(e.data).error || 'SSE 连接中断/失败') : 'SSE 连接中断/失败';
-            rawAnswerText += `\n\n（错误：${msg}）`;
-            renderAnswerWithImages(answerEl, rawAnswerText, []);
-          }catch(_){
-            rawAnswerText += `\n\n（错误：SSE 连接中断/失败）`;
-            renderAnswerWithImages(answerEl, rawAnswerText, []);
-          }
-          es.close();
-          sendBtn.disabled = false;
-        });
-      }catch(e){
-        const bubble = botMsgEl.querySelector('.bubble');
-        const progress = botMsgEl.querySelector('details.progress');
-        const typing = botMsgEl.querySelector('.typing');
-        if(typing) typing.remove();
-        bubble.innerHTML = `请求失败：${escapeHtml(e.message || e)}\n\n` + progress.outerHTML;
-        sendBtn.disabled = false;
-      }
-    }
-
-    sendBtn.addEventListener('click', onSend);
-    inputEl.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' && !e.shiftKey){
-        e.preventDefault();
-        onSend();
-      }
-    });
-    btnClear.addEventListener('click', async () => {
-      if(!confirm('确定要清空当前会话的历史记录吗？这将无法恢复。')) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/history/${sessionId}`, { method: 'DELETE' });
-        if(!res.ok) {
-           console.error("Failed to clear history backend, status:", res.status);
-           alert('服务端清空失败，仅清空本地显示');
-        }
-      } catch(e) {
-        console.error("Failed to clear history backend", e);
-        alert('服务端清空失败，仅清空本地显示');
-      }
-
-      // 清空除首条欢迎消息外的内容
-      const nodes = Array.from(chatEl.querySelectorAll('.msg'));
-      for(let i=1;i<nodes.length;i++) nodes[i].remove();
-      scrollToBottom();
-    });
-
-    apiHealth();
-    setInterval(apiHealth, 5000);
-    loadHistory();
-    setTimeout(() => inputEl.focus(), 200);
-  </script>
+        <div class="conversation-composer" id="conversationComposerSlot" hidden></div>
+        <footer class="travel-footer"><svg><use href="#i-mountain"/></svg><span>回答仅供旅行参考，出行信息请以官方最新发布为准。</span></footer>
+      </section>
+      <section class="import-view" id="importView" aria-label="资料导入" hidden>
+        <div class="import-intro"><span class="import-symbol"><svg><use href="#i-file"/></svg></span><h1>把旅行资料，变成随身向导。</h1><p>上传景点攻略、行程笔记或酒店资料，让每一次回答更有依据。</p></div>
+        <div class="import-service-status" id="importServiceStatus" role="status">正在检查导入服务…</div>
+        <label class="upload-zone" id="dropZone" tabindex="0"><svg><use href="#i-upload"/></svg><strong>拖拽资料到这里，或<span>选择文件</span></strong><small>支持 Markdown（.md）与 PDF，可一次选择多个文件</small><input class="sr-only" id="fileInput" type="file" multiple accept=".md,.pdf" disabled></label>
+        <div class="import-tips"><p><strong>整理资料的小建议</strong></p><p>文件名写清目的地和主题，例如「成都住宿推荐.md」。</p><p>导入会写入知识库；同一份旅游资料再次导入时，将更新原有切片。</p></div>
+        <section class="upload-list" id="fileList" aria-label="导入任务" aria-live="polite"></section>
+      </section>
+    </main>
+  </div>
+  <dialog id="clearDialog" class="confirm-dialog"><form method="dialog"><span class="dialog-symbol"><svg><use href="#i-trash"/></svg></span><h2>清空这段对话？</h2><p>将删除当前会话在浏览器和服务端的历史记录，此操作无法撤销。其他对话不会受到影响。</p><p class="dialog-error" id="clearError" role="alert" hidden></p><div class="dialog-actions"><button class="quiet-button" value="cancel">保留对话</button><button class="primary-button" id="confirmClear" type="button">确认清空</button></div></form></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>
-

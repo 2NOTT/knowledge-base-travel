@@ -60,8 +60,18 @@ class TravelAdaptationTests(unittest.TestCase):
         self.assertIsNone(build_travel_expr())
         self.assertEqual(
             build_travel_expr(cities=["成都"], entities=["熊猫基地"]),
-            '(city in ["成都"]) or (entity_name in ["熊猫基地"])',
+            '(city like "%成都%" or file_title like "%成都%") or (entity_name in ["熊猫基地"])',
         )
+
+    def test_travel_filter_includes_multi_city_documents_and_parent_region(self):
+        expression = build_travel_expr(cities=["大理"])
+        self.assertIn('city like "%大理%"', expression)
+        self.assertIn('file_title like "%云南%"', expression)
+        self.assertIn('city like "%杭州%"', build_travel_expr(cities=["杭州"]))
+
+    def test_travel_filter_escapes_like_wildcards_and_quotes(self):
+        expression = build_travel_expr(cities=['A%_"B'])
+        self.assertIn(r'A\\%\\_\"B', expression)
 
     def test_rrf_ignores_invalid_hits_and_uses_milvus_id_fallback(self):
         hits = NodeRrf._normalise_hits(
